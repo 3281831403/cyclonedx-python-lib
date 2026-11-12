@@ -143,3 +143,13 @@ class InvalidConfidenceException(CycloneDxModelException):
     The confidence of the evidence from 0 - 1, where 1 is 100% confidence.
     """
     pass
+
+
+class DuplicateBomRefException(CycloneDxModelException):
+    """
+    Raised when the same ``bom-ref`` value is assigned to more than one object in a Bom.
+
+    Every ``bom-ref`` MUST be unique within a BOM - see the CycloneDX specification.
+    The exception message names the offending value and all objects that use it.
+    """
+    pass

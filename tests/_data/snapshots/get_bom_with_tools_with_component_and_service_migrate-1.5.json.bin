@@ -29,6 +29,7 @@
           "type": "application"
         },
         {
+          "bom-ref": "cyclonedx-python-lib-11.12.0",
           "description": "Python library for CycloneDX",
           "externalReferences": [
             {

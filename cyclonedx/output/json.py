@@ -16,10 +16,11 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
 from abc import abstractmethod
+from copy import deepcopy
 from json import dumps as json_dumps, loads as json_loads
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
-from ..contrib.bom.utils import BomDependencyGraphFlatMerger, BomRefDiscriminator
+from ..contrib.bom.utils import BomDependencyGraphFlatMerger, BomRefNormalizer
 from ..exception.output import FormatNotSupportedException
 from ..schema import OutputFormat, SchemaVersion
 from ..schema.schema import (
@@ -69,9 +70,12 @@ class Json(BaseOutput, BaseSchemaVersion):
             'specVersion': self.schema_version.to_version()
         }
         _view = SCHEMA_VERSIONS.get(self.schema_version_enum)
-        bom = self.get_bom()
+        # Work on a private copy: `Bom.validate()` and the normalization below
+        # mutate the Bom (dependency registration, bom-ref value assignment),
+        # so the caller's Bom must never be touched - not even on failure.
+        bom = deepcopy(self.get_bom())
         bom.validate()
-        with BomRefDiscriminator.from_bom(bom):
+        with BomRefNormalizer.from_bom(bom):
             with BomDependencyGraphFlatMerger(bom):
                 bom_json: dict[str, Any] = json_loads(
                     bom.as_json(  # type:ignore[attr-defined]

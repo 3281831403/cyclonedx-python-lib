@@ -1231,11 +1231,13 @@ def get_bom_with_tools() -> Bom:
 
 
 def get_bom_with_tools_with_component_migrate() -> Bom:
+    this_tool_component = this_component()
+    this_tool_component.bom_ref.value = 'cyclonedx-python-lib-11.12.0'
     return _make_bom(
         metadata=BomMetaData(
             tools=ToolRepository(
                 components=(
-                    this_component(),
+                    this_tool_component,
                     Component(name='test-component', bom_ref='test-component'),
                     Component(type=ComponentType.APPLICATION,
                               bom_ref='other-component',
@@ -1269,11 +1271,13 @@ def get_bom_with_tools_with_service_migrate() -> Bom:
 
 
 def get_bom_with_tools_with_component_and_service_migrate() -> Bom:
+    this_tool_component = this_component()
+    this_tool_component.bom_ref.value = 'cyclonedx-python-lib-11.12.0'
     return _make_bom(
         metadata=BomMetaData(
             tools=ToolRepository(
                 components=(
-                    this_component(),
+                    this_tool_component,
                     Component(name='test-component', bom_ref='test-component'),
                     Component(type=ComponentType.APPLICATION,
                               bom_ref='other-component',

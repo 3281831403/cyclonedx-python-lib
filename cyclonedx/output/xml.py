@@ -16,11 +16,12 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
 
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 from xml.dom.minidom import parseString as dom_parseString  # nosec B408
 from xml.etree.ElementTree import Element as XmlElement, tostring as xml_dumps  # nosec B405
 
-from ..contrib.bom.utils import BomRefDiscriminator
+from ..contrib.bom.utils import BomRefNormalizer
 from ..schema import OutputFormat, SchemaVersion
 from ..schema.schema import (
     SCHEMA_VERSIONS,
@@ -58,10 +59,13 @@ class Xml(BaseSchemaVersion, BaseOutput):
             return
 
         _view = SCHEMA_VERSIONS[self.schema_version_enum]
-        bom = self.get_bom()
+        # Work on a private copy: `Bom.validate()` and the normalization below
+        # mutate the Bom (dependency registration, bom-ref value assignment),
+        # so the caller's Bom must never be touched - not even on failure.
+        bom = deepcopy(self.get_bom())
         bom.validate()
         xmlns = self.get_target_namespace()
-        with BomRefDiscriminator.from_bom(bom):
+        with BomRefNormalizer.from_bom(bom):
             self._bom_xml = '<?xml version="1.0" ?>\n' + xml_dumps(  # type:ignore[call-overload]
                 bom.as_xml(  # type:ignore[attr-defined]
                     _view, as_string=False, xmlns=xmlns),

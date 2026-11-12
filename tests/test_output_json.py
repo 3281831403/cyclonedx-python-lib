@@ -16,7 +16,6 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
 
-import re
 from collections.abc import Callable
 from typing import Any
 from unittest import TestCase
@@ -27,6 +26,7 @@ from ddt import data, ddt, idata, named_data, unpack
 
 from cyclonedx.exception import CycloneDxException, MissingOptionalDependencyException
 from cyclonedx.exception.model import (
+    DuplicateBomRefException,
     InvalidOmniBorIdException,
     InvalidSwhidException,
     LicenseExpressionAlongWithOthersException,
@@ -98,12 +98,14 @@ class TestOutputJson(TestCase, SnapshotMixin):
             return None  # expected
         raise error.exception
 
-    def test_bomref_not_duplicate(self) -> None:
+    def test_bomref_duplicate_raises(self) -> None:
         bom, nr_bomrefs = bom_all_same_bomref()
-        output = BY_SCHEMA_VERSION[SchemaVersion.V1_4](bom).output_as_string()
-        found = re.findall(r'"bom-ref":\s*"(.*?)"', output)
-        self.assertEqual(nr_bomrefs, len(found))
-        self.assertCountEqual(set(found), found, 'expected unique items')
+        # distinct objects sharing one bom-ref must fail loudly, naming the ref,
+        # instead of being silently renamed
+        with self.assertRaises(DuplicateBomRefException) as error:
+            BY_SCHEMA_VERSION[SchemaVersion.V1_4](bom).output_as_string()
+        self.assertIn('foo', str(error.exception))
+        self.assertEqual(nr_bomrefs, 6)
 
 
 @ddt
